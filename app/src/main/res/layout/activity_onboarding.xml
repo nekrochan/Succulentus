@@ -6,33 +6,32 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/primary_light"
-    tools:context=".LoginActivity">
+    tools:context=".OnboardingActivity">
 
-    <EditText
-        android:id="@+id/editTextText2"
+    <TextView
+        android:id="@+id/appName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:ems="10"
-        android:inputType="text"
-        android:text="username"
+        android:layout_marginTop="193dp"
+        android:text="SUCCULENTUS"
+        android:textSize="32dp"
+        android:textStyle="bold"
+        android:textColor="@color/primary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="221dp"
-        tools:ignore="MissingConstraints" />
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <EditText
-        android:id="@+id/editTextText3"
+    <TextView
+        android:id="@+id/appDescription"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:ems="10"
-        android:inputType="textPassword"
-        android:text="password"
+        android:layout_marginTop="234dp"
+        android:text="Succulent recognizing"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="288dp"
-        tools:ignore="MissingConstraints" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <Button
         android:id="@+id/signInButton"
@@ -40,23 +39,27 @@
         android:layout_height="wrap_content"
         android:backgroundTint="@color/secondary"
         android:text="Sign in"
-        android:textStyle="bold"
+        android:textColor="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        tools:ignore="MissingConstraints"
-        tools:layout_editor_absoluteY="359dp" />
+        tools:layout_editor_absoluteY="325dp"
+        tools:ignore="MissingConstraints" />
 
     <Button
         android:id="@+id/signUpButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:backgroundTint="@color/tertiary"
-        android:text="Don't have an account yet"
-        android:textStyle="normal"
+        android:backgroundTint="@color/secondary"
+        android:text="Sign up"
+        android:textColor="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        tools:ignore="MissingConstraints"
-        tools:layout_editor_absoluteY="425dp" />
+        tools:layout_editor_absoluteY="373dp"
+        tools:ignore="MissingConstraints" />
 
-
+    <androidx.constraintlayout.widget.Group
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 </androidx.constraintlayout.widget.ConstraintLayout>
