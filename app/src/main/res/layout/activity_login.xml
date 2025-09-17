@@ -6,60 +6,73 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/primary_light"
-    tools:context=".MainActivity">
+    tools:context=".LoginActivity">
 
     <TextView
-        android:id="@+id/appName"
+        android:id="@+id/textView4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="193dp"
-        android:text="SUCCULENTUS"
-        android:textSize="32dp"
-        android:textStyle="bold"
-        android:textColor="@color/primary"
+        android:text="Username:"
+        tools:layout_editor_absoluteX="175dp"
+        tools:layout_editor_absoluteY="196dp"
+        tools:ignore="MissingConstraints" />
+
+    <EditText
+    android:id="@+id/editTextTextPassword2"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:ems="10"
+    android:inputType="textPersonName"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintHorizontal_bias="0.5"
+    app:layout_constraintStart_toStartOf="parent"
+    tools:layout_editor_absoluteY="231dp"
+        tools:ignore="MissingConstraints" />
+
+    <TextView
+        android:id="@+id/textView5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Password:"
+        tools:layout_editor_absoluteX="173dp"
+        tools:layout_editor_absoluteY="352dp"
+        tools:ignore="MissingConstraints" />
+
+    <EditText
+        android:id="@+id/editTextTextPassword"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="textPassword"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/appDescription"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="234dp"
-        android:text="Succulent recognizing"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        tools:layout_editor_absoluteY="379dp"
+        tools:ignore="MissingConstraints" /> /
 
     <Button
-        android:id="@+id/signInButton"
+        android:id="@+id/button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:backgroundTint="@color/secondary"
         android:text="Sign in"
-        android:textColor="@color/black"
+        android:backgroundTint="@color/secondary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="325dp"
+        tools:layout_editor_absoluteY="484dp"
         tools:ignore="MissingConstraints" />
 
     <Button
-        android:id="@+id/signUpButton"
+        android:id="@+id/button2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:backgroundTint="@color/secondary"
         android:text="Sign up"
-        android:textColor="@color/black"
+        android:backgroundTint="@color/tertiary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="373dp"
+        tools:layout_editor_absoluteY="546dp"
         tools:ignore="MissingConstraints" />
 
-    <androidx.constraintlayout.widget.Group
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
