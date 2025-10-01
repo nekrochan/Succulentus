@@ -9,16 +9,50 @@
     tools:context=".MainActivity">
 
     <Button
-        android:id="@+id/button3"
+        android:id="@+id/buttonGoToArticles"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:backgroundTint="@color/primary"
-        android:text="Recognize"
+        android:text="Go to articles"
         android:textColor="@color/black"
         android:textSize="18dp"
         android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
         tools:ignore="MissingConstraints"
-        tools:layout_editor_absoluteX="138dp"
-        tools:layout_editor_absoluteY="457dp" />
+        tools:layout_editor_absoluteY="460dp" />
+
+    <ImageButton
+        android:id="@+id/imageButtonOpenCamera"
+        android:layout_width="169dp"
+        android:layout_height="166dp"
+        android:backgroundTint="@color/primary"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:srcCompat="@drawable/outline_add_a_photo_24"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteY="263dp" />
+
+    <ImageButton
+        android:id="@+id/imageButtonAccount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/primary_light"
+        app:srcCompat="@drawable/outline_account_circle_64"
+        tools:layout_editor_absoluteX="307dp"
+        tools:layout_editor_absoluteY="16dp"
+        tools:ignore="MissingConstraints" />
+
+    <TextView
+        android:id="@+id/textViewUsername"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="JohnDoe12345"
+        android:textSize="32sp"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="150dp"
+        tools:layout_editor_absoluteY="27dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
