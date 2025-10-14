@@ -21,10 +21,6 @@
             android:name=".LoginActivity"
             android:exported="false" />
         <activity
-            android:name=".ui.login.LoginActivity"
-            android:exported="false"
-            android:label="@string/title_activity_login" />
-        <activity
             android:name=".OnboardingActivity"
             android:exported="true" >
             <intent-filter>
