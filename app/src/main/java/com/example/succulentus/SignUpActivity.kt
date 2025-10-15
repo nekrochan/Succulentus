@@ -1,5 +1,6 @@
 package com.example.succulentus
 
+import User
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
@@ -40,10 +41,18 @@ class SignUpActivity : AppCompatActivity() {
         buttonSigningUp.setOnClickListener {
             // проверка корректности данных перед регистрацией
             if (validateSignUpData()) {
-                val intent = Intent(this, MainActivity::class.java)
-                intent.putExtra("username", editTextUsernameNew.text.toString().trim())
-                startActivity(intent)
-                finish()
+                val user = User(
+                    email = editTextTextEmailAddress.text.toString().trim(),
+                    password = editTextPasswordNew.text.toString().trim(),
+                    username = editTextUsernameNew.text.toString().trim()
+                )
+                // сохранение пользователя в бд с передачей данных в LoginActivity
+                if (registerNewUser(user)) {
+                    val intent = Intent(this, LoginActivity::class.java)
+                    intent.putExtra("user", user)
+                    startActivity(intent)
+                    finish()
+                }
             }
         }
 
@@ -132,19 +141,15 @@ class SignUpActivity : AppCompatActivity() {
      * Функция для регистрации нового пользователя (заглушка для бд)
      * @return Boolean - true если регистрация успешна, false если пользователь уже существует
      */
-    private fun registerNewUser(): Boolean {
-        val username = editTextUsernameNew.text.toString().trim()
-        val email = editTextTextEmailAddress.text.toString().trim()
-        val password = editTextPasswordNew.text.toString().trim()
-
+    private fun registerNewUser(user: User): Boolean {
         // заглушка для проверки существования пользователя в бд
-        if (checkIfUserExists(username, email)) {
+        if (checkIfUserExists(user.username, user.email)) {
             showToast("Пользователь с таким именем или email уже существует")
             return false
         }
 
         // заглушка для сохранения пользователя в бд
-        if (saveUserToDatabase(username, email, password)) {
+        if (saveUserToDatabase(user)) {
             showToast("Регистрация прошла успешно")
             return true
         } else {
@@ -165,7 +170,7 @@ class SignUpActivity : AppCompatActivity() {
     /**
      * Заглушка для сохранения пользователя в бд
      */
-    private fun saveUserToDatabase(username: String, email: String, password: String): Boolean {
+    private fun saveUserToDatabase(user: User): Boolean {
         return true
     }
 

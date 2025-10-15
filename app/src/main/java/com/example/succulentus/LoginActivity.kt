@@ -1,5 +1,6 @@
 package com.example.succulentus
 
+import User
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
@@ -29,6 +30,13 @@ class LoginActivity : AppCompatActivity() {
         // инициализация поля для ввода (предполагая, что они есть в layout)
         editTextUsername = findViewById(R.id.editTextUsername)
         editTextPassword = findViewById(R.id.editTextPassword)
+
+        // получение данных пользователя из SignUpActivity
+        val user = intent.getSerializableExtra("user") as? User
+        user?.let {
+            editTextUsername.setText(it.username)
+            editTextPassword.setText(it.password)
+        }
 
         val buttonSignIn = findViewById<Button>(R.id.buttonSignedIn)
         buttonSignIn.setOnClickListener {
@@ -85,9 +93,9 @@ class LoginActivity : AppCompatActivity() {
 
         // здесь будет сверка данных с бд
         if (!checkUserInDatabase(username, password)) {
-             showToast("Неверный username или пароль")
-             return false
-         }
+            showToast("Неверный username или пароль")
+            return false
+        }
 
         return true
     }
