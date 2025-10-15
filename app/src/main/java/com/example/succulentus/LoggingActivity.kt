@@ -2,9 +2,7 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 
 /**
- * Базовый класс для всех активностей с логированием жизненного цикла
- *
- * Этот класс автоматически логирует все основные методы жизненного цикла Android
+ * Автоматически логирует все основные методы жизненного цикла Android
  */
 open class LoggingActivity : AppCompatActivity() {
 
@@ -22,7 +20,6 @@ open class LoggingActivity : AppCompatActivity() {
 
     /**
      * Вызывается при ПЕРВОМ создании активности
-     * Здесь обычно настраиваем интерфейс и загружаем данные
      */
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         super.onCreate(savedInstanceState)
