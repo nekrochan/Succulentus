@@ -5,7 +5,6 @@ import androidx.appcompat.app.AppCompatActivity
  * Базовый класс для всех активностей с логированием жизненного цикла
  *
  * Этот класс автоматически логирует все основные методы жизненного цикла Android
- * Просто наследуй от него вместо обычной AppCompatActivity
  */
 open class LoggingActivity : AppCompatActivity() {
 

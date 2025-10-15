@@ -1,5 +1,6 @@
 package com.example.succulentus
 
+import LoggingActivity
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -7,7 +8,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import android.widget.TextView
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : LoggingActivity() {
 
     private lateinit var textViewUsername: TextView
 

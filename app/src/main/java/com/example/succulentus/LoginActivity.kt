@@ -1,5 +1,6 @@
 package com.example.succulentus
 
+import LoggingActivity
 import User
 import android.content.Intent
 import android.os.Bundle
@@ -11,7 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
-class LoginActivity : AppCompatActivity() {
+class LoginActivity : LoggingActivity() {
 
     // обновление полей для ввода данных
     private lateinit var editTextUsername: EditText

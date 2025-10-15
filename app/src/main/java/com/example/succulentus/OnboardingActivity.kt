@@ -1,5 +1,6 @@
 package com.example.succulentus
 
+import LoggingActivity
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
@@ -10,7 +11,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.succulentus.R.id.buttonGetStarted
 
-class OnboardingActivity : AppCompatActivity() {
+class OnboardingActivity : LoggingActivity() {
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
