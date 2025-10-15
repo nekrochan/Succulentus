@@ -127,9 +127,9 @@ class SignUpActivity : AppCompatActivity() {
             return false
         }
 
-        // проверка на специальные символы в имени пользователя
+        // проверка юзерки
         if (!isValidUsername(username)) {
-            showToast("Имя пользователя содержит недопустимые символы")
+            showToast("Имя пользователя должно содержать от 8 до 20 символов")
             editTextUsernameNew.requestFocus()
             return false
         }
@@ -185,8 +185,7 @@ class SignUpActivity : AppCompatActivity() {
      * Проверка имени пользователя на допустимые символы
      */
     private fun isValidUsername(username: String): Boolean {
-        val usernameRegex = "^[a-zA-Z0-9_-]{3,20}$".toRegex()
-        return username.matches(usernameRegex)
+        return username.length in 8..20
     }
 
     /**
