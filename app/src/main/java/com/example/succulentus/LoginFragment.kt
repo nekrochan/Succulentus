@@ -1,23 +1,23 @@
 package com.example.succulentus
 
-import LoggingActivity
+import LoggingFragment
 import User
-import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.Fragment
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 
-class LoginActivity : LoggingActivity() {
+class LoginFragment : LoggingFragment() {
 
     // обновление полей для ввода данных
     private lateinit var editTextUsername: EditText
     private lateinit var editTextPassword: EditText
 
+    /*
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -42,7 +42,7 @@ class LoginActivity : LoggingActivity() {
         val buttonSignIn = findViewById<Button>(R.id.buttonSignedIn)
         buttonSignIn.setOnClickListener {
             if (validateLoginData()) {
-                val intent = Intent(this, MainActivity::class.java)
+                val intent = Intent(this, HomeActivity::class.java)
                 intent.putExtra("username", editTextUsername.text.toString().trim())
                 startActivity(intent)
                 finish()
@@ -54,6 +54,44 @@ class LoginActivity : LoggingActivity() {
             val intent = Intent(this, SignUpActivity::class.java)
             startActivity(intent)
             finish()
+        }
+    }
+
+    */
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        return inflater.inflate(R.layout.fragment_login, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        // инициализация полей для ввода данных
+        editTextUsername = view.findViewById(R.id.editTextUsername)
+        editTextPassword = view.findViewById(R.id.editTextPassword)
+
+        // получение данных пользователя из аргументов
+        val user = arguments?.getSerializable("user") as? User
+        user?.let {
+            editTextUsername.setText(it.username)
+            editTextPassword.setText(it.password)
+        }
+
+        val buttonSignIn = view.findViewById<Button>(R.id.buttonSignedIn)
+        buttonSignIn.setOnClickListener {
+            if (validateLoginData()) {
+                val username = editTextUsername.text.toString().trim()
+                onLoginSuccessListener?.onLoginSuccess(username)
+            }
+        }
+
+        val buttonSignUp = view.findViewById<Button>(R.id.buttonSignUp)
+        buttonSignUp.setOnClickListener {
+            onSignUpClickListener?.onSignUpClick()
         }
     }
 
@@ -112,15 +150,45 @@ class LoginActivity : LoggingActivity() {
      * Вспомогательная функция для показа уведомлений
      */
     private fun showToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        // Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
     }
 
     /**
      * Дополнительная функция для проверки наличия данных пользователя в базе данных
-     * (раскомментируйте и реализуйте при необходимости)
      */
     private fun checkUserInDatabase(username: String, password: String): Boolean {
         return true
+    }
+
+    // ДОБАВИЛА:
+
+
+    // интерфейсы для коммуникации с Activity
+    interface OnLoginSuccessListener {
+        fun onLoginSuccess(username: String)
+    }
+    var onLoginSuccessListener: OnLoginSuccessListener? = null
+
+    interface OnSignUpClickListener {
+        fun onSignUpClick()
+    }
+    var onSignUpClickListener: OnSignUpClickListener? = null
+
+
+    /**
+     * Метод для создания нового экземпляра фрагмента с аргументами
+     */
+    companion object {
+        fun newInstance(user: User? = null): LoginFragment {
+            val fragment = LoginFragment()
+            if (user != null) {
+                val args = Bundle()
+                args.putSerializable("user", user)
+                fragment.arguments = args
+            }
+            return fragment
+        }
     }
 
 }

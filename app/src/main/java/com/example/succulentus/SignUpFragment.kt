@@ -1,19 +1,16 @@
 package com.example.succulentus
 
-import LoggingActivity
+import LoggingFragment
 import User
-import android.annotation.SuppressLint
-import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 
-class SignUpActivity : LoggingActivity() {
+class SignUpFragment : LoggingFragment() {
 
     // объявление полей для ввода данных
     private lateinit var editTextUsernameNew: EditText
@@ -21,6 +18,7 @@ class SignUpActivity : LoggingActivity() {
     private lateinit var editTextPasswordNew: EditText
     private lateinit var editTextPasswordNewConfirm: EditText
 
+    /*
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,6 +60,47 @@ class SignUpActivity : LoggingActivity() {
             val intent = Intent(this, LoginActivity::class.java)
             startActivity(intent)
             finish()
+        }
+    }
+
+     */
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        return inflater.inflate(R.layout.fragment_sign_up, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        // Инициализация полей для ввода
+        editTextUsernameNew = view.findViewById(R.id.editTextUsernameNew)
+        editTextTextEmailAddress = view.findViewById(R.id.editTextTextEmailAddress)
+        editTextPasswordNew = view.findViewById(R.id.editTextPasswordNew)
+        editTextPasswordNewConfirm = view.findViewById(R.id.editTextPasswordNewConfirm)
+
+        val buttonSigningUp = view.findViewById<Button>(R.id.buttonSigningUp)
+        buttonSigningUp.setOnClickListener {
+            // Проверка корректности данных перед регистрацией
+            if (validateSignUpData()) {
+                val user = User(
+                    email = editTextTextEmailAddress.text.toString().trim(),
+                    password = editTextPasswordNew.text.toString().trim(),
+                    username = editTextUsernameNew.text.toString().trim()
+                )
+                // Сохранение пользователя в БД и передача данных в LoginFragment
+                if (registerNewUser(user)) {
+                    onRegistrationCompleteListener?.onRegistrationComplete(user)
+                }
+            }
+        }
+
+        val buttonHaveAccount = view.findViewById<Button>(R.id.buttonHaveAccount)
+        buttonHaveAccount.setOnClickListener {
+            onHaveAccountClickListener?.onHaveAccountClick()
         }
     }
 
@@ -161,7 +200,6 @@ class SignUpActivity : LoggingActivity() {
 
     /**
      * Заглушка для проверки существования пользователя
-     * В реальном приложении здесь будет запрос к бд
      */
     private fun checkIfUserExists(username: String, email: String): Boolean {
         // Если пользователя еще нет в базе, возвращает false, тогда ошибка не вылезет
@@ -193,6 +231,29 @@ class SignUpActivity : LoggingActivity() {
      * Вспомогательная функция для показа уведомлений
      */
     private fun showToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+    }
+
+
+    // ДОБАВИЛА:
+
+    // интерфейсы для коммуникации с Activity
+    interface OnRegistrationCompleteListener {
+        fun onRegistrationComplete(user: User)
+    }
+    var onRegistrationCompleteListener: OnRegistrationCompleteListener? = null
+
+    interface OnHaveAccountClickListener {
+        fun onHaveAccountClick()
+    }
+    var onHaveAccountClickListener: OnHaveAccountClickListener? = null
+
+    /**
+     * Метод для создания нового экземпляра фрагмента
+     */
+    companion object {
+        fun newInstance(): SignUpFragment {
+            return SignUpFragment()
+        }
     }
 }

@@ -1,43 +1,133 @@
 package com.example.succulentus
 
 import LoggingActivity
-import android.os.Bundle
-import androidx.activity.enableEdgeToEdge
+import User
+import android.annotation.SuppressLint
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import android.widget.TextView
 
-class MainActivity : LoggingActivity() {
+import android.os.Bundle
+import androidx.fragment.app.Fragment
 
-    private lateinit var textViewUsername: TextView
+class MainActivity : LoggingActivity(),
+    OnboardingFragment.OnGetStartedClickListener,
+    LoginFragment.OnLoginSuccessListener,
+    LoginFragment.OnSignUpClickListener,
+    SignUpFragment.OnRegistrationCompleteListener,
+    SignUpFragment.OnHaveAccountClickListener {
+
+    private val fragmentContainerId = R.id.fragmentContainer
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_main)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+
+        if (savedInstanceState == null) {
+            showOnboardingFragment()
         }
+    }
 
-        // поиск TextView для имени пользователя
-        textViewUsername = findViewById(R.id.textViewUsername)
+    private fun showOnboardingFragment() {
+        val onboardingFragment = OnboardingFragment.newInstance()
+        onboardingFragment.onGetStartedClickListener = this
+        replaceFragment(onboardingFragment, addToBackStack = false)
+    }
 
-        // получение имя пользователя из Intent
-        val username = getUsernameFromIntent()
+    private fun showLoginFragment(user: User? = null) {
+        val loginFragment = LoginFragment.newInstance(user)
+        loginFragment.onLoginSuccessListener = this
+        loginFragment.onSignUpClickListener = this
+        replaceFragment(loginFragment, addToBackStack = false)
+    }
 
-        // передача полученной юзерки в TextView
-        textViewUsername.text = username
+    private fun showSignUpFragment() {
+        val signUpFragment = SignUpFragment.newInstance()
+        signUpFragment.onRegistrationCompleteListener = this
+        signUpFragment.onHaveAccountClickListener = this
+        replaceFragment(signUpFragment, addToBackStack = true)
+    }
+
+    private fun showHomeFragment(username: String) {
+        val homeFragment = HomeFragment.newInstance(username)
+        replaceFragment(homeFragment, addToBackStack = false)
+        clearBackStack()
     }
 
     /**
-     * Получает имя пользователя из Intent
-     * Если имя не передано, использует значение по умолчанию
+     * Заменяет фрагмент в контейнере
+     * @param fragment - фрагмент для отображения
+     * @param addToBackStack - добавлять ли в стек возврата
      */
-    private fun getUsernameFromIntent(): String {
-        return intent.getStringExtra("username") ?: "Гость"
+    private fun replaceFragment(fragment: Fragment, addToBackStack: Boolean) {
+        val transaction = supportFragmentManager.beginTransaction()
+
+        // заменяем фрагмент в контейнере
+        transaction.replace(fragmentContainerId, fragment)
+
+        // добавляем в back stack если нужно
+        if (addToBackStack) {
+            transaction.addToBackStack(fragment::class.java.simpleName)
+        }
+
+        transaction.commit()
     }
 
+    /**
+     * Очищает стек возврата фрагментов
+     */
+    private fun clearBackStack() {
+        // очищаем весь back stack
+        supportFragmentManager.popBackStack(null, androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE)
+    }
+
+    // ========== Реализация интерфейсов фрагментов ==========
+
+    override fun onGetStartedClick() {
+        showLoginFragment()
+    }
+
+    override fun onLoginSuccess(username: String) {
+        showHomeFragment(username)
+    }
+
+    override fun onSignUpClick() {
+        showSignUpFragment()
+    }
+
+    override fun onRegistrationComplete(user: User) {
+        showLoginFragment(user)
+    }
+
+    override fun onHaveAccountClick() {
+        showLoginFragment()
+    }
+
+
+    /**
+     * Обработка кнопки "Назад"
+     */
+    @SuppressLint("GestureBackNavigation", "MissingSuperCall")
+    override fun onBackPressed() {
+        // получаем текущий активный фрагмент
+        val currentFragment = supportFragmentManager.findFragmentById(fragmentContainerId)
+
+        when (currentFragment) {
+            // если текущий фрагмент SignUpFragment - возвращаемся назад (к LoginFragment)
+            is SignUpFragment -> {
+                if (supportFragmentManager.backStackEntryCount > 0) {
+                    // возвращаемся к предыдущему фрагменту в стеке
+                    // (сейчас это может быть только LoginFragment)
+                    supportFragmentManager.popBackStack()
+                } else {
+                    // если почему-то нет в стеке, показываем LoginFragment
+                    showLoginFragment()
+                }
+            }
+
+            // для всех остальных фрагментов - закрываем приложение
+            else -> {
+                // закрываем приложение, завершая Activity
+                finishAffinity() // закрывает все Activity приложения
+            }
+        }
+    }
 }
