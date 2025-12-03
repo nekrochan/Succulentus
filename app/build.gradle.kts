@@ -5,6 +5,7 @@ plugins {
     // Kotlin serialization plugin for type safe routes and navigation arguments
     kotlin("plugin.serialization") version "2.0.21"
     id("androidx.navigation.safeargs")
+    id("kotlin-parcelize")
 }
 
 android {
@@ -76,4 +77,7 @@ dependencies {
 
     // JSON serialization library, works with the Kotlin serialization plugin
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+
+    implementation("androidx.navigation:navigation-fragment-ktx:${nav_version}")
+    implementation("androidx.navigation:navigation-ui-ktx:${nav_version}")
 }
