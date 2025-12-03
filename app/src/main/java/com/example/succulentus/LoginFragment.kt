@@ -20,6 +20,7 @@ class LoginFragment : LoggingFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        //баннинг здесь
         _binding = FragmentLoginBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -29,12 +30,14 @@ class LoginFragment : LoggingFragment() {
 
         // Получение данных пользователя через Safe Args
         args.user?.let {
+            //баннинг здесь
             binding.editTextUsername.setText(it.username)
             binding.editTextPassword.setText(it.password)
         }
 
         binding.buttonSignedIn.setOnClickListener {
             if (validateLoginData()) {
+                //баннинг здесь и тд
                 val username = binding.editTextUsername.text.toString().trim()
                 // Навигация к HomeFragment с передачей данных через Safe Args
                 val action = LoginFragmentDirections.actionLoginFragmentToHomeFragment(username)

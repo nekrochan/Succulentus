@@ -18,6 +18,7 @@ class SignUpFragment : LoggingFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        //баннинг здесь и тд
         _binding = FragmentSignUpBinding.inflate(inflater, container, false)
         return binding.root
     }

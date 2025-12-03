@@ -17,6 +17,7 @@ class OnboardingFragment : LoggingFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        //баннинг здесь
         _binding = FragmentOnboardingBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -24,6 +25,7 @@ class OnboardingFragment : LoggingFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        //баннинг здесь
         binding.buttonGetStarted.setOnClickListener {
             // Навигация к LoginFragment с помощью Navigation Component
             findNavController().navigate(R.id.action_onboardingFragment_to_loginFragment)
@@ -32,6 +34,7 @@ class OnboardingFragment : LoggingFragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        //баннинг здесь
         _binding = null
     }
 

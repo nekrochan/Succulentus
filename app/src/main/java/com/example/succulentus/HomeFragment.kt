@@ -18,6 +18,7 @@ class HomeFragment : LoggingFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        //баннинг здесь
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -26,6 +27,7 @@ class HomeFragment : LoggingFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         // Получение имени пользователя через Safe Args
+        //баннинг здесь и тд
         binding.textViewUsername.text = args.username
     }
 
