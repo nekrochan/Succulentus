@@ -3,12 +3,14 @@ package com.example.succulentus
 import LoggingFragment
 import User
 import android.os.Bundle
+import android.util.Patterns
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.navigation.fragment.findNavController
 
 class SignUpFragment : LoggingFragment() {
 
@@ -17,53 +19,6 @@ class SignUpFragment : LoggingFragment() {
     private lateinit var editTextTextEmailAddress: EditText
     private lateinit var editTextPasswordNew: EditText
     private lateinit var editTextPasswordNewConfirm: EditText
-
-    /*
-    @SuppressLint("MissingInflatedId")
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_sign_up)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-
-        // инициализация поля для ввода
-        editTextUsernameNew = findViewById(R.id.editTextUsernameNew)
-        editTextTextEmailAddress = findViewById(R.id.editTextTextEmailAddress)
-        editTextPasswordNew = findViewById(R.id.editTextPasswordNew)
-        editTextPasswordNewConfirm = findViewById(R.id.editTextPasswordNewConfirm)
-
-        val buttonSigningUp = findViewById<Button>(R.id.buttonSigningUp)
-        buttonSigningUp.setOnClickListener {
-            // проверка корректности данных перед регистрацией
-            if (validateSignUpData()) {
-                val user = User(
-                    email = editTextTextEmailAddress.text.toString().trim(),
-                    password = editTextPasswordNew.text.toString().trim(),
-                    username = editTextUsernameNew.text.toString().trim()
-                )
-                // сохранение пользователя в бд с передачей данных в LoginActivity
-                if (registerNewUser(user)) {
-                    val intent = Intent(this, LoginActivity::class.java)
-                    intent.putExtra("user", user)
-                    startActivity(intent)
-                    finish()
-                }
-            }
-        }
-
-        val buttonHaveAccount = findViewById<Button>(R.id.buttonHaveAccount)
-        buttonHaveAccount.setOnClickListener {
-            val intent = Intent(this, LoginActivity::class.java)
-            startActivity(intent)
-            finish()
-        }
-    }
-
-     */
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -76,7 +31,7 @@ class SignUpFragment : LoggingFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Инициализация полей для ввода
+        // Инициализация полей
         editTextUsernameNew = view.findViewById(R.id.editTextUsernameNew)
         editTextTextEmailAddress = view.findViewById(R.id.editTextTextEmailAddress)
         editTextPasswordNew = view.findViewById(R.id.editTextPasswordNew)
@@ -84,23 +39,27 @@ class SignUpFragment : LoggingFragment() {
 
         val buttonSigningUp = view.findViewById<Button>(R.id.buttonSigningUp)
         buttonSigningUp.setOnClickListener {
-            // Проверка корректности данных перед регистрацией
             if (validateSignUpData()) {
                 val user = User(
                     email = editTextTextEmailAddress.text.toString().trim(),
                     password = editTextPasswordNew.text.toString().trim(),
                     username = editTextUsernameNew.text.toString().trim()
                 )
-                // Сохранение пользователя в БД и передача данных в LoginFragment
+
                 if (registerNewUser(user)) {
-                    onRegistrationCompleteListener?.onRegistrationComplete(user)
+                    // Навигация обратно к LoginFragment с передачей user
+                    // и удалением SignUpFragment из стека
+                    findNavController().navigate(
+                        SignUpFragmentDirections.actionSignUpFragmentToLoginFragment(user.username)
+                    )
                 }
             }
         }
 
         val buttonHaveAccount = view.findViewById<Button>(R.id.buttonHaveAccount)
         buttonHaveAccount.setOnClickListener {
-            onHaveAccountClickListener?.onHaveAccountClick()
+            // Навигация обратно к LoginFragment (просто назад)
+            findNavController().navigateUp()
         }
     }
 
@@ -182,20 +141,19 @@ class SignUpFragment : LoggingFragment() {
      * @return Boolean - true если регистрация успешна, false если пользователь уже существует
      */
     private fun registerNewUser(user: User): Boolean {
-        // заглушка для проверки существования пользователя в бд
         if (checkIfUserExists(user.username, user.email)) {
             showToast("Пользователь с таким именем или email уже существует")
             return false
         }
 
-        // заглушка для сохранения пользователя в бд
         if (saveUserToDatabase(user)) {
-            showToast("Регистрация прошла успешно")
+            // Передаем объект User
+            val action = SignUpFragmentDirections.actionSignUpFragmentToLoginFragment(user)
+            findNavController().navigate(action)
             return true
-        } else {
-            showToast("Ошибка регистрации. Попробуйте позже")
-            return false
         }
+
+        return false
     }
 
     /**
@@ -217,7 +175,7 @@ class SignUpFragment : LoggingFragment() {
      * Базовая проверка формата email
      */
     private fun isValidEmail(email: String): Boolean {
-        return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+        return Patterns.EMAIL_ADDRESS.matcher(email).matches()
     }
 
     /**
@@ -232,28 +190,5 @@ class SignUpFragment : LoggingFragment() {
      */
     private fun showToast(message: String) {
         Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
-    }
-
-
-    // ДОБАВИЛА:
-
-    // интерфейсы для коммуникации с Activity
-    interface OnRegistrationCompleteListener {
-        fun onRegistrationComplete(user: User)
-    }
-    var onRegistrationCompleteListener: OnRegistrationCompleteListener? = null
-
-    interface OnHaveAccountClickListener {
-        fun onHaveAccountClick()
-    }
-    var onHaveAccountClickListener: OnHaveAccountClickListener? = null
-
-    /**
-     * Метод для создания нового экземпляра фрагмента
-     */
-    companion object {
-        fun newInstance(): SignUpFragment {
-            return SignUpFragment()
-        }
     }
 }

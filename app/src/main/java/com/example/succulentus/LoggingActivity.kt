@@ -1,3 +1,4 @@
+import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 
@@ -21,7 +22,7 @@ open class LoggingActivity : AppCompatActivity() {
     /**
      * Вызывается при ПЕРВОМ создании активности
      */
-    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, ">> ${getCurrentActivityName()} - СОЗДАНА (onCreate)")
     }

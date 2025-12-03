@@ -1,63 +1,23 @@
 package com.example.succulentus
 
 import LoggingFragment
-import User
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 
 class LoginFragment : LoggingFragment() {
 
-    // обновление полей для ввода данных
     private lateinit var editTextUsername: EditText
     private lateinit var editTextPassword: EditText
 
-    /*
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_login)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-
-        // инициализация поля для ввода (предполагая, что они есть в layout)
-        editTextUsername = findViewById(R.id.editTextUsername)
-        editTextPassword = findViewById(R.id.editTextPassword)
-
-        // получение данных пользователя из SignUpActivity
-        val user = intent.getSerializableExtra("user") as? User
-        user?.let {
-            editTextUsername.setText(it.username)
-            editTextPassword.setText(it.password)
-        }
-
-        val buttonSignIn = findViewById<Button>(R.id.buttonSignedIn)
-        buttonSignIn.setOnClickListener {
-            if (validateLoginData()) {
-                val intent = Intent(this, HomeActivity::class.java)
-                intent.putExtra("username", editTextUsername.text.toString().trim())
-                startActivity(intent)
-                finish()
-            }
-        }
-
-        val buttonSignUp = findViewById<Button>(R.id.buttonSignUp)
-        buttonSignUp.setOnClickListener {
-            val intent = Intent(this, SignUpActivity::class.java)
-            startActivity(intent)
-            finish()
-        }
-    }
-
-    */
+    // Получение аргументов через Safe Args
+    private val args: LoginFragmentArgs by navArgs()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -70,28 +30,45 @@ class LoginFragment : LoggingFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // инициализация полей для ввода данных
+        // Инициализация полей
         editTextUsername = view.findViewById(R.id.editTextUsername)
         editTextPassword = view.findViewById(R.id.editTextPassword)
 
-        // получение данных пользователя из аргументов
-        val user = arguments?.getSerializable("user") as? User
+        // Получение данных из аргументов
+        val prefilledUsername = args.prefilledUsername
+        val prefilledPassword = args.prefilledPassword
+
+        if (prefilledUsername.isNotEmpty()) {
+            editTextUsername.setText(prefilledUsername)
+        }
+        if (prefilledPassword.isNotEmpty()) {
+            editTextPassword.setText(prefilledPassword)
+        }
+
+        // Получение данных пользователя из аргументов (если перешли из SignUpFragment)
+        val user = args.user
         user?.let {
-            editTextUsername.setText(it.username)
-            editTextPassword.setText(it.password)
+            editTextUsername.setText(prefilledUsername)
+            editTextPassword.setText(prefilledPassword)
         }
 
         val buttonSignIn = view.findViewById<Button>(R.id.buttonSignedIn)
         buttonSignIn.setOnClickListener {
             if (validateLoginData()) {
                 val username = editTextUsername.text.toString().trim()
-                onLoginSuccessListener?.onLoginSuccess(username)
+                // Навигация к HomeFragment с очисткой стека
+                findNavController().navigate(
+                    LoginFragmentDirections.actionLoginFragmentToHomeFragment(username)
+                )
             }
         }
 
         val buttonSignUp = view.findViewById<Button>(R.id.buttonSignUp)
         buttonSignUp.setOnClickListener {
-            onSignUpClickListener?.onSignUpClick()
+            // Навигация к SignUpFragment (добавляется в back stack)
+            findNavController().navigate(
+                LoginFragmentDirections.actionLoginFragmentToSignUpFragment()
+            )
         }
     }
 
@@ -159,36 +136,6 @@ class LoginFragment : LoggingFragment() {
      */
     private fun checkUserInDatabase(username: String, password: String): Boolean {
         return true
-    }
-
-    // ДОБАВИЛА:
-
-
-    // интерфейсы для коммуникации с Activity
-    interface OnLoginSuccessListener {
-        fun onLoginSuccess(username: String)
-    }
-    var onLoginSuccessListener: OnLoginSuccessListener? = null
-
-    interface OnSignUpClickListener {
-        fun onSignUpClick()
-    }
-    var onSignUpClickListener: OnSignUpClickListener? = null
-
-
-    /**
-     * Метод для создания нового экземпляра фрагмента с аргументами
-     */
-    companion object {
-        fun newInstance(user: User? = null): LoginFragment {
-            val fragment = LoginFragment()
-            if (user != null) {
-                val args = Bundle()
-                args.putSerializable("user", user)
-                fragment.arguments = args
-            }
-            return fragment
-        }
     }
 
 }

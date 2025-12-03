@@ -9,7 +9,7 @@ open class LoggingFragment : Fragment() {
 
     // тег для фильтрации в Logcat - так мы легко найдем сообщения
     companion object {
-        private const val TAG = "FRAGMENT_LIFECYCLE"
+        private const val TAG = "LIFECYCLE_LOGGER"
     }
 
     // получаем имя текущего фрагмента для понятного вывода
