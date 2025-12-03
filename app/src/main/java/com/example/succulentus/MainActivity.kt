@@ -23,24 +23,4 @@ class MainActivity : LoggingActivity() {
         val appBarConfiguration = AppBarConfiguration(navController.graph)
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration)
     }
-
-    /**
-     * Обработка кнопки "Назад" в ActionBar
-     */
-    override fun onSupportNavigateUp(): Boolean {
-        return navController.navigateUp() || super.onSupportNavigateUp()
-    }
-
-    /**
-     * Обработка системной кнопки "Назад"
-     */
-    override fun onBackPressed() {
-        // Если текущий фрагмент - SignUpFragment, выполняем навигацию назад
-        if (navController.currentDestination?.id == R.id.signUpFragment) {
-            navController.navigateUp()
-        } else {
-            // Для остальных фрагментов - закрываем приложение
-            finishAffinity()
-        }
-    }
 }
