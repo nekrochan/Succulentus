@@ -1,3 +1,5 @@
+package com.example.succulentus
+
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 

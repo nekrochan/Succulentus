@@ -1,42 +1,13 @@
 package com.example.succulentus
 
-import LoggingActivity
-import LoggingFragment
-import android.annotation.SuppressLint
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import androidx.activity.enableEdgeToEdge
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 
 class OnboardingFragment : LoggingFragment() {
-
-    /*
-    @SuppressLint("MissingInflatedId")
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_onboarding)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-
-        val buttonGetStarted = findViewById<Button>(R.id.buttonGetStarted)
-        buttonGetStarted.setOnClickListener {
-            val intent = Intent(this, LoginActivity::class.java)
-            startActivity(intent)
-            finish()  // закрыть текущую активити
-        }
-    }
-
-     */
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -51,20 +22,11 @@ class OnboardingFragment : LoggingFragment() {
 
         val buttonGetStarted = view.findViewById<Button>(R.id.buttonGetStarted)
         buttonGetStarted.setOnClickListener {
-            onGetStartedClickListener?.onGetStartedClick()
+            // Навигация к LoginFragment с помощью Navigation Component
+            findNavController().navigate(R.id.action_onboardingFragment_to_loginFragment)
         }
     }
 
-    // интерфейс для коммуникации с Activity
-    interface OnGetStartedClickListener {
-        fun onGetStartedClick()
-    }
-
-    var onGetStartedClickListener: OnGetStartedClickListener? = null
-
-    /**
-     * Метод для создания нового экземпляра фрагмента
-     */
     companion object {
         fun newInstance(): OnboardingFragment {
             return OnboardingFragment()
