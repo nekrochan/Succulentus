@@ -1,44 +1,36 @@
 package com.example.succulentus
 
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
 import android.widget.Toast
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.navigation.fragment.findNavController
+import com.example.succulentus.databinding.FragmentSignUpBinding
 
 class SignUpFragment : LoggingFragment() {
 
-    private lateinit var editTextUsernameNew: EditText
-    private lateinit var editTextTextEmailAddress: EditText
-    private lateinit var editTextPasswordNew: EditText
-    private lateinit var editTextPasswordNewConfirm: EditText
+    private var _binding: FragmentSignUpBinding? = null
+    private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_sign_up, container, false)
+    ): View {
+        _binding = FragmentSignUpBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        editTextUsernameNew = view.findViewById(R.id.editTextUsernameNew)
-        editTextTextEmailAddress = view.findViewById(R.id.editTextTextEmailAddress)
-        editTextPasswordNew = view.findViewById(R.id.editTextPasswordNew)
-        editTextPasswordNewConfirm = view.findViewById(R.id.editTextPasswordNewConfirm)
-
-        val buttonSigningUp = view.findViewById<Button>(R.id.buttonSigningUp)
-        buttonSigningUp.setOnClickListener {
+        binding.buttonSigningUp.setOnClickListener {
             if (validateSignUpData()) {
                 val user = User(
-                    email = editTextTextEmailAddress.text.toString().trim(),
-                    password = editTextPasswordNew.text.toString().trim(),
-                    username = editTextUsernameNew.text.toString().trim()
+                    email = binding.editTextTextEmailAddress.text.toString().trim(),
+                    password = binding.editTextPasswordNew.text.toString().trim(),
+                    username = binding.editTextUsernameNew.text.toString().trim()
                 )
                 if (registerNewUser(user)) {
                     // Навигация обратно к LoginFragment с передачей данных
@@ -48,70 +40,74 @@ class SignUpFragment : LoggingFragment() {
             }
         }
 
-        val buttonHaveAccount = view.findViewById<Button>(R.id.buttonHaveAccount)
-        buttonHaveAccount.setOnClickListener {
+        binding.buttonHaveAccount.setOnClickListener {
             // Навигация обратно к LoginFragment
             findNavController().navigate(R.id.action_signUpFragment_to_loginFragment)
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
     private fun validateSignUpData(): Boolean {
-        val username = editTextUsernameNew.text.toString().trim()
-        val email = editTextTextEmailAddress.text.toString().trim()
-        val password = editTextPasswordNew.text.toString().trim()
-        val passwordConfirm = editTextPasswordNewConfirm.text.toString().trim()
+        val username = binding.editTextUsernameNew.text.toString().trim()
+        val email = binding.editTextTextEmailAddress.text.toString().trim()
+        val password = binding.editTextPasswordNew.text.toString().trim()
+        val passwordConfirm = binding.editTextPasswordNewConfirm.text.toString().trim()
 
         if (username.isEmpty()) {
             showToast("Введите имя пользователя")
-            editTextUsernameNew.requestFocus()
+            binding.editTextUsernameNew.requestFocus()
             return false
         }
 
         if (email.isEmpty()) {
             showToast("Введите email")
-            editTextTextEmailAddress.requestFocus()
+            binding.editTextTextEmailAddress.requestFocus()
             return false
         }
 
         if (password.isEmpty()) {
             showToast("Введите пароль")
-            editTextPasswordNew.requestFocus()
+            binding.editTextPasswordNew.requestFocus()
             return false
         }
 
         if (passwordConfirm.isEmpty()) {
             showToast("Подтвердите пароль")
-            editTextPasswordNewConfirm.requestFocus()
+            binding.editTextPasswordNewConfirm.requestFocus()
             return false
         }
 
         if (!isValidEmail(email)) {
             showToast("Введите корректный email")
-            editTextTextEmailAddress.requestFocus()
+            binding.editTextTextEmailAddress.requestFocus()
             return false
         }
 
         if (username.length < 3) {
             showToast("Имя пользователя должно содержать минимум 3 символа")
-            editTextUsernameNew.requestFocus()
+            binding.editTextUsernameNew.requestFocus()
             return false
         }
 
         if (password.length < 6) {
             showToast("Пароль должен содержать минимум 6 символов")
-            editTextPasswordNew.requestFocus()
+            binding.editTextPasswordNew.requestFocus()
             return false
         }
 
         if (password != passwordConfirm) {
             showToast("Пароли не совпадают")
-            editTextPasswordNewConfirm.requestFocus()
+            binding.editTextPasswordNewConfirm.requestFocus()
             return false
         }
 
         if (!isValidUsername(username)) {
             showToast("Имя пользователя должно содержать от 8 до 20 символов")
-            editTextUsernameNew.requestFocus()
+            binding.editTextUsernameNew.requestFocus()
             return false
         }
 

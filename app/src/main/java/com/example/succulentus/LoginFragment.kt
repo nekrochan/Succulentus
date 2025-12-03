@@ -1,83 +1,83 @@
 package com.example.succulentus
 
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
 import android.widget.Toast
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import com.example.succulentus.databinding.FragmentLoginBinding
 
 class LoginFragment : LoggingFragment() {
 
-    private lateinit var editTextUsername: EditText
-    private lateinit var editTextPassword: EditText
+    private var _binding: FragmentLoginBinding? = null
+    private val binding get() = _binding!!
     private val args: LoginFragmentArgs by navArgs()
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_login, container, false)
+    ): View {
+        _binding = FragmentLoginBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        editTextUsername = view.findViewById(R.id.editTextUsername)
-        editTextPassword = view.findViewById(R.id.editTextPassword)
-
         // Получение данных пользователя через Safe Args
         args.user?.let {
-            editTextUsername.setText(it.username)
-            editTextPassword.setText(it.password)
+            binding.editTextUsername.setText(it.username)
+            binding.editTextPassword.setText(it.password)
         }
 
-        val buttonSignIn = view.findViewById<Button>(R.id.buttonSignedIn)
-        buttonSignIn.setOnClickListener {
+        binding.buttonSignedIn.setOnClickListener {
             if (validateLoginData()) {
-                val username = editTextUsername.text.toString().trim()
+                val username = binding.editTextUsername.text.toString().trim()
                 // Навигация к HomeFragment с передачей данных через Safe Args
                 val action = LoginFragmentDirections.actionLoginFragmentToHomeFragment(username)
                 findNavController().navigate(action)
             }
         }
 
-        val buttonSignUp = view.findViewById<Button>(R.id.buttonSignUp)
-        buttonSignUp.setOnClickListener {
+        binding.buttonSignUp.setOnClickListener {
             // Навигация к SignUpFragment
             findNavController().navigate(R.id.action_loginFragment_to_signUpFragment)
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
     private fun validateLoginData(): Boolean {
-        val username = editTextUsername.text.toString().trim()
-        val password = editTextPassword.text.toString().trim()
+        val username = binding.editTextUsername.text.toString().trim()
+        val password = binding.editTextPassword.text.toString().trim()
 
         if (username.isEmpty()) {
             showToast("Введите username")
-            editTextUsername.requestFocus()
+            binding.editTextUsername.requestFocus()
             return false
         }
 
         if (password.isEmpty()) {
             showToast("Введите пароль")
-            editTextPassword.requestFocus()
+            binding.editTextPassword.requestFocus()
             return false
         }
 
         if (!isValidUsername(username)) {
             showToast("Введите корректный username")
-            editTextUsername.requestFocus()
+            binding.editTextUsername.requestFocus()
             return false
         }
 
         if (password.length < 5) {
             showToast("Пароль должен содержать минимум 5 символов")
-            editTextPassword.requestFocus()
+            binding.editTextPassword.requestFocus()
             return false
         }
 
