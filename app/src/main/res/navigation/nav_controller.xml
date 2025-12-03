@@ -11,9 +11,12 @@
         android:label="OnboardingFragment"
         tools:layout="@layout/fragment_onboarding" >
 
+        <!-- При нажатии назад на onboarding приложение закрывается -->
         <action
             android:id="@+id/action_onboardingFragment_to_loginFragment"
-            app:destination="@id/loginFragment" />
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/onboardingFragment"
+            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment
@@ -28,14 +31,17 @@
             app:nullable="true"
             android:defaultValue="@null" />
 
+        <!-- Переход к signUp с возможностью вернуться к login -->
         <action
             android:id="@+id/action_loginFragment_to_signUpFragment"
             app:destination="@id/signUpFragment" />
 
+        <!-- Переход к home с очисткой стека навигации -->
         <action
             android:id="@+id/action_loginFragment_to_homeFragment"
-            app:destination="@id/homeFragment" >
-            <!-- Добавьте этот аргумент -->
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" >
             <argument
                 android:name="username"
                 app:argType="string" />
@@ -48,17 +54,11 @@
         android:label="SignUpFragment"
         tools:layout="@layout/fragment_sign_up" >
 
+        <!-- Возврат к login из signUp -->
         <action
             android:id="@+id/action_signUpFragment_to_loginFragment"
             app:destination="@id/loginFragment"
-            app:popUpTo="@id/loginFragment"
-            app:popUpToInclusive="true" >
-            <!-- Добавьте этот аргумент -->
-            <argument
-                android:name="user"
-                app:argType="com.example.succulentus.User"
-                app:nullable="true" />
-        </action>
+            app:popUpTo="@id/loginFragment" />
     </fragment>
 
     <fragment
