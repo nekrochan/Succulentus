@@ -26,4 +26,8 @@ class CharacterAdapter(private val characters: List<Character>?) : RecyclerView.
             if (binding.films.text.length==0) binding.films.text = "No films"
         }
     }
+
+    fun getCharacters(): List<Character>? {
+        return characters
+    }
 }

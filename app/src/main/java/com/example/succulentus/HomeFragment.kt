@@ -6,8 +6,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.succulentus.data.Character
 import com.example.succulentus.databinding.FragmentHomeBinding
 import com.example.succulentus.network.KtorNetwork
 import com.example.succulentus.network.KtorNetworkApi
@@ -56,6 +58,11 @@ class HomeFragment : LoggingFragment() {
         // Получение имени пользователя через Safe Args
         //баннинг здесь и тд
         binding.textViewUsername.text = args.username
+        binding.imageButtonAccount.setOnClickListener {
+            // Переход к SettingsFragment
+            val action = HomeFragmentDirections.actionHomeFragmentToSettingsFragment()
+            findNavController().navigate(action)
+        }
     }
 
     override fun onDestroyView() {
@@ -67,6 +74,15 @@ class HomeFragment : LoggingFragment() {
         fun newInstance(username: String? = null): HomeFragment {
             val fragment = HomeFragment()
             return fragment
+        }
+    }
+
+    fun getCharactersData(): List<Character> {
+        return try {
+            // Возвращаем данные из адаптера
+            characterAdapter?.getCharacters() ?: emptyList()
+        } catch (e: Exception) {
+            emptyList()
         }
     }
 }

@@ -74,4 +74,15 @@
             app:argType="string"
             android:defaultValue="Гость" />
     </fragment>
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.example.succulentus.SettingsFragment"
+        android:label="Настройки"
+        tools:layout="@layout/fragment_settings" />
+
+    <!-- Добавьте action из HomeFragment к SettingsFragment -->
+    <action
+        android:id="@+id/action_homeFragment_to_settingsFragment"
+        app:destination="@id/settingsFragment" />
 </navigation>
