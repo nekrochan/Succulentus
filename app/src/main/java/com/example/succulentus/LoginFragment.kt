@@ -93,7 +93,7 @@ class LoginFragment : LoggingFragment() {
     }
 
     private fun isValidUsername(username: String): Boolean {
-        return true
+        return (username==args.user?.username)
     }
 
     private fun showToast(message: String) {
@@ -101,7 +101,7 @@ class LoginFragment : LoggingFragment() {
     }
 
     private fun checkUserInDatabase(username: String, password: String): Boolean {
-        return true
+        return (username==args.user?.username && password==args.user?.password)
     }
 
     companion object {

@@ -262,9 +262,6 @@ class SettingsFragment : Fragment() {
                 val success = saveBackupToExternalStorage(backupData)
 
                 if (success) {
-                    // Сохраняем копию во внутреннее хранилище
-                    saveBackupToInternalStorage(backupData)
-
                     hasBackup = true
                     updateFileInfo()
                     Toast.makeText(requireContext(),
@@ -357,12 +354,7 @@ class SettingsFragment : Fragment() {
 
     private fun saveBackupToExternalStorage(data: String): Boolean {
         return try {
-            val downloadsDir = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // Для Android 10+ используем приложения
-                requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-            } else {
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            }
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
 
             // Создаем папку с именем приложения
             val appDir = File(downloadsDir, "SucculentusBackups")
@@ -380,28 +372,6 @@ class SettingsFragment : Fragment() {
         } catch (e: Exception) {
             Log.e("SettingsFragment", "Error saving to external storage", e)
             false
-        }
-    }
-
-    private fun saveBackupToInternalStorage(data: String) {
-        try {
-            // Создаем папку для резервных копий
-            val backupDir = File(requireContext().filesDir, "backups")
-            if (!backupDir.exists()) {
-                backupDir.mkdirs()
-            }
-
-            // Сохраняем с временной меткой
-            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            val internalFile = File(backupDir, "backup_$timestamp.txt")
-
-            FileOutputStream(internalFile).use { output ->
-                output.write(data.toByteArray(Charsets.UTF_8))
-            }
-
-            Log.d("SettingsFragment", "Internal backup saved: ${internalFile.absolutePath}")
-        } catch (e: Exception) {
-            Log.e("SettingsFragment", "Error saving internal backup", e)
         }
     }
 
@@ -443,11 +413,7 @@ class SettingsFragment : Fragment() {
 
         backupFiles?.maxByOrNull { it.lastModified() }?.let { latestBackup ->
             try {
-                val downloadsDir = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-                } else {
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                }
+                val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
 
                 val appDir = File(downloadsDir, "SucculentusBackups")
                 if (!appDir.exists()) {
@@ -464,6 +430,7 @@ class SettingsFragment : Fragment() {
 
                 backupFile = restoredFile
                 hasBackup = true
+                latestBackup.delete()
                 updateFileInfo()
                 Toast.makeText(requireContext(), "Резервная копия восстановлена",
                     Toast.LENGTH_SHORT).show()
@@ -550,26 +517,21 @@ class SettingsFragment : Fragment() {
     }
 
     private fun checkInternalBackups() {
-        val backupDir = File(requireContext().filesDir, "backups")
-        if (backupDir.exists()) {
-            val backupFiles = backupDir.listFiles { file ->
-                file.name.startsWith("backup_") && file.name.endsWith(".txt")
-            }
+        val backupFiles = requireContext().filesDir.listFiles { file ->
+            file.name.startsWith(".hidden_backup_") && file.name.endsWith(".txt")
+        }
 
-            val hasInternalBackup = backupFiles?.isNotEmpty() ?: false
-            binding.buttonRestoreBackup.isEnabled = hasInternalBackup
+        val hasInternalBackup = backupFiles?.isNotEmpty() ?: false
+        binding.buttonRestoreBackup.isEnabled = hasInternalBackup
 
-            if (hasInternalBackup) {
-                val latestBackup = backupFiles!!.maxByOrNull { it.lastModified() }
-                val backupCount = backupFiles.size
-                val latestDate = SimpleDateFormat("dd.MM.yyyy HH:mm",
-                    Locale.getDefault()).format(Date(latestBackup!!.lastModified()))
+        if (hasInternalBackup) {
+            val latestBackup = backupFiles!!.maxByOrNull { it.lastModified() }
+            val backupCount = backupFiles.size
+            val latestDate = SimpleDateFormat("dd.MM.yyyy HH:mm",
+                Locale.getDefault()).format(Date(latestBackup!!.lastModified()))
 
-                binding.textViewFileInfo.append("\n\nДоступно внутренних резервных копий: $backupCount")
-                binding.textViewFileInfo.append("\nПоследняя: $latestDate")
-            }
-        } else {
-            binding.buttonRestoreBackup.isEnabled = false
+            binding.textViewFileInfo.append("\n\nДоступно внутренних резервных копий: $backupCount")
+            binding.textViewFileInfo.append("\nПоследняя: $latestDate")
         }
     }
 
@@ -586,10 +548,6 @@ class SettingsFragment : Fragment() {
             }
             .setNegativeButton("Отмена", null)
             .show()
-    }
-
-    private fun formatBackupDataAsJson(characters: List<Character>): String {
-        return Json { prettyPrint = true }.encodeToString(characters)
     }
 
     override fun onDestroyView() {

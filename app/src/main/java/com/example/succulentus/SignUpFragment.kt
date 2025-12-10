@@ -36,6 +36,12 @@ class SignUpFragment : LoggingFragment() {
                 if (registerNewUser(user)) {
                     // Навигация обратно к LoginFragment с передачей данных
                     val action = SignUpFragmentDirections.actionSignUpFragmentToLoginFragment(user)
+                    val sharedPref = requireContext().getSharedPreferences("app_settings",
+                        android.content.Context.MODE_PRIVATE)
+                    with(sharedPref.edit()) {
+                        putString("username", user.username)
+                        apply()
+                    }
                     findNavController().navigate(action)
                 }
             }

@@ -48,7 +48,7 @@ class HomeFragment : LoggingFragment() {
                 Toast.makeText(requireContext(), "No Internet", Toast.LENGTH_SHORT).show()
             }
         }
-        
+
         return binding.root
     }
 
@@ -57,7 +57,15 @@ class HomeFragment : LoggingFragment() {
 
         // Получение имени пользователя через Safe Args
         //баннинг здесь и тд
-        binding.textViewUsername.text = args.username
+        //binding.textViewUsername.text = args.username
+
+        // Получение имени пользователя через shared preferences
+        val sharedPref = requireContext().getSharedPreferences("app_settings",
+            android.content.Context.MODE_PRIVATE)
+        val username = sharedPref.getString("username", "User") ?: "User"
+        binding.textViewUsername.text = username
+
+
         binding.imageButtonAccount.setOnClickListener {
             // Переход к SettingsFragment
             val action = HomeFragmentDirections.actionHomeFragmentToSettingsFragment()

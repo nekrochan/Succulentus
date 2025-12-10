@@ -41,12 +41,6 @@ class DataStoreManager(private val context: Context) {
             )
         }
 
-    // Отдельные Flow для каждого параметра (опционально)
-    val notificationsEnabled: Flow<Boolean> = appSettings.map { it.notificationsEnabled }
-    val language: Flow<String> = appSettings.map { it.language }
-    val fontSize: Flow<Int> = appSettings.map { it.fontSize }
-    val backupFilename: Flow<String> = appSettings.map { it.backupFilename }
-
     // Сохранение всех настроек
     suspend fun saveSettings(settings: AppSettings) {
         context.dataStore.edit { preferences ->
