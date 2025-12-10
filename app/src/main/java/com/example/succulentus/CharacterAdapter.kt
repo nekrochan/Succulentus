@@ -21,9 +21,19 @@ class CharacterAdapter(private var characters: List<Character>?) : RecyclerView.
 
     class HomeViewHolder(private val binding: CharacterBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(character: Character) {
-            binding.characterName.text = character.name
-            binding.films.text = character.films?.joinToString(", ") ?: "No films"
-            if (binding.films.text.isEmpty()) binding.films.text = "No films"
+            binding.characterName.text = character.name ?: "Unknown"
+
+            character.films?.let { filmsList ->
+                // Фильтруем null и пустые строки
+                val validFilms = filmsList.filter { !it.isNullOrBlank() }
+                if (validFilms.isNotEmpty()) {
+                    binding.films.text = validFilms.joinToString(", ")
+                } else {
+                    binding.films.text = "No films"
+                }
+            } ?: run {
+                binding.films.text = "No films"
+            }
         }
     }
 

@@ -60,9 +60,8 @@ class KtorNetwork : KtorNetworkApi {
                     protocol = URLProtocol.HTTPS
                     contentType(ContentType.Application.Json)
                     path("character")
-                    // Если API поддерживает пагинацию, добавляем параметры
-                    // parameters.append("page", page.toString())
-                    // parameters.append("pageSize", "10")
+                    parameters.append("page", page.toString())
+                    parameters.append("pageSize", "50")
                 }
             }.let { response ->
                 Log.d("Ktor Response", response.body())
