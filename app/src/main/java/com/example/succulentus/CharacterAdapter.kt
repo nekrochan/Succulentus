@@ -22,8 +22,8 @@ class CharacterAdapter(private val characters: List<Character>?) : RecyclerView.
     class HomeViewHolder(private val binding: CharacterBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(character: Character) {
             binding.characterName.text = character.name
-            binding.culture.text = character.culture
-            binding.gender.text= character.gender
+            binding.films.text = character.films?.joinToString(", ") ?: "No films"
+            if (binding.films.text.length==0) binding.films.text = "No films"
         }
     }
 }

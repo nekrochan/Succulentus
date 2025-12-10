@@ -43,7 +43,7 @@ class HomeFragment : LoggingFragment() {
                 }
             }
             catch (e: Exception){
-                Toast.makeText(requireContext(), "App doesn't able to connect the Internet", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "No Internet", Toast.LENGTH_SHORT).show()
             }
         }
         
