@@ -446,11 +446,7 @@ class SettingsFragment : Fragment() {
 
     private fun checkBackupFile() {
         try {
-            val downloadsDir = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-            } else {
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            }
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
 
             val appDir = File(downloadsDir, "SucculentusBackups")
             backupFile = File(appDir, backupFileName)
