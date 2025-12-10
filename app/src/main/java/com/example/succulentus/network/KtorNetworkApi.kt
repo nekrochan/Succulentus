@@ -20,15 +20,13 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
-// import ru.rutmitt.internetrequests.data.ApiResponse
-
 import kotlin.time.Duration.Companion.seconds
 
 interface KtorNetworkApi {
-    suspend fun getCharacters(): List<Character>?  // был ApiResponse
+    suspend fun getCharacters(page: Int = 1): List<Character>?
 }
 
-private const val NETWORK_BASE_URL = "api.disneyapi.dev"  // заменен источник
+private const val NETWORK_BASE_URL = "api.disneyapi.dev"
 
 class KtorNetwork : KtorNetworkApi {
     private val json = Json {
@@ -53,24 +51,28 @@ class KtorNetwork : KtorNetworkApi {
         }
     }
 
-    override suspend fun getCharacters(): List<Character>? {
+    override suspend fun getCharacters(page: Int): List<Character>? {
         return try {
-            Log.d("KtorNetwork", "Fetching characters...")
+            Log.d("KtorNetwork", "Fetching characters page $page...")
             client.get {
                 url {
                     host = NETWORK_BASE_URL
                     protocol = URLProtocol.HTTPS
                     contentType(ContentType.Application.Json)
                     path("character")
+                    // Если API поддерживает пагинацию, добавляем параметры
+                    // parameters.append("page", page.toString())
+                    // parameters.append("pageSize", "10")
                 }
             }.let { response ->
                 Log.d("Ktor Response", response.body())
-                JsonObject(response.body()).get("data")?.let { Json.decodeFromJsonElement<List<Character>>(it) }
+                JsonObject(response.body()).get("data")?.let {
+                    Json.decodeFromJsonElement<List<Character>>(it)
+                }
             }
         } catch (exception: Exception) {
             Log.e("Error", exception.message.toString())
             listOf()
         }
     }
-
 }

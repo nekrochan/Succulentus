@@ -7,9 +7,9 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.succulentus.data.Character
+import com.example.succulentus.database.CharacterDatabase
 import com.example.succulentus.databinding.FragmentHomeBinding
 import com.example.succulentus.network.KtorNetwork
 import com.example.succulentus.network.KtorNetworkApi
@@ -19,10 +19,15 @@ class HomeFragment : LoggingFragment() {
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
-    private val args: HomeFragmentArgs by navArgs()
     private lateinit var characterAdapter: CharacterAdapter
     private var _ktorApi: KtorNetworkApi? = null
     private val ktorApi get() = _ktorApi!!
+
+    private var currentPage = 1
+    private val itemsPerPage = 10
+    private var isLoading = false
+    private var hasMoreData = true
+    private lateinit var database: CharacterDatabase
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -30,23 +35,21 @@ class HomeFragment : LoggingFragment() {
         savedInstanceState: Bundle?
     ): View {
         super.onCreateView(inflater, container, savedInstanceState)
-        //баннинг здесь
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         _ktorApi = KtorNetwork()
+
+        // Инициализация базы данных
+        database = CharacterDatabase.getDatabase(requireContext())
 
         binding.let { binding ->
             binding.recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-            try{
-                lifecycleScope.launch{
-                    val charactersLists = ktorApi.getCharacters()
-                    characterAdapter = CharacterAdapter(charactersLists)
-                    binding.recyclerView.adapter=characterAdapter
-                }
-            }
-            catch (e: Exception){
-                Toast.makeText(requireContext(), "No Internet", Toast.LENGTH_SHORT).show()
-            }
+            // Инициализация адаптера с пустым списком
+            characterAdapter = CharacterAdapter(emptyList())
+            binding.recyclerView.adapter = characterAdapter
+
+            // Холодный старт: проверяем данные в БД
+            checkDatabaseData()
         }
 
         return binding.root
@@ -55,21 +58,173 @@ class HomeFragment : LoggingFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Получение имени пользователя через Safe Args
-        //баннинг здесь и тд
-        //binding.textViewUsername.text = args.username
-
-        // Получение имени пользователя через shared preferences
         val sharedPref = requireContext().getSharedPreferences("app_settings",
             android.content.Context.MODE_PRIVATE)
         val username = sharedPref.getString("username", "User") ?: "User"
         binding.textViewUsername.text = username
 
-
         binding.imageButtonAccount.setOnClickListener {
-            // Переход к SettingsFragment
             val action = HomeFragmentDirections.actionHomeFragmentToSettingsFragment()
             findNavController().navigate(action)
+        }
+
+        // Обработчик для кнопки обновления (теперь она уже в XML)
+        binding.refreshButton.setOnClickListener {
+            refreshData()
+        }
+
+        // Добавляем слушатель прокрутки для пагинации
+        binding.recyclerView.addOnScrollListener(object : androidx.recyclerview.widget.RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: androidx.recyclerview.widget.RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+
+                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+                val visibleItemCount = layoutManager.childCount
+                val totalItemCount = layoutManager.itemCount
+                val firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition()
+
+                if (!isLoading && hasMoreData) {
+                    if (visibleItemCount + firstVisibleItemPosition >= totalItemCount
+                        && firstVisibleItemPosition >= 0
+                        && totalItemCount >= itemsPerPage) {
+                        loadMoreData()
+                    }
+                }
+            }
+        })
+    }
+
+    private fun checkDatabaseData() {
+        lifecycleScope.launch {
+            try {
+                // Проверяем, есть ли данные в БД
+                val charactersFromDb = database.characterDao().getAll()
+
+                if (charactersFromDb.isNotEmpty()) {
+                    // Отображаем данные из БД
+                    characterAdapter.updateData(charactersFromDb)
+
+                    // Проверяем, есть ли еще данные для загрузки
+                    hasMoreData = charactersFromDb.size >= itemsPerPage
+                } else {
+                    // Делаем запрос к API
+                    loadCharactersFromApi()
+                }
+            } catch (e: Exception) {
+                // В случае ошибки БД, загружаем из API
+                loadCharactersFromApi()
+            }
+        }
+    }
+
+    private fun loadCharactersFromApi() {
+        if (isLoading) return
+
+        isLoading = true
+        lifecycleScope.launch {
+            try {
+                val charactersFromApi = ktorApi.getCharacters(currentPage)
+
+                charactersFromApi?.let { characters ->
+                    if (characters.isNotEmpty()) {
+                        // Сохраняем в БД
+                        database.characterDao().insertAll(characters)
+
+                        // Обновляем адаптер
+                        characterAdapter.updateData(characters)
+
+                        // Сбрасываем пагинацию
+                        currentPage = 1
+                        hasMoreData = characters.size >= itemsPerPage
+
+                        Toast.makeText(requireContext(), "Данные загружены", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(requireContext(), "Нет данных для отображения", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Ошибка загрузки: ${e.message}", Toast.LENGTH_SHORT).show()
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
+    private fun refreshData() {
+        if (isLoading) return
+
+        isLoading = true
+        currentPage = 1
+        hasMoreData = true
+
+        lifecycleScope.launch {
+            try {
+                // Очищаем БД перед обновлением
+                database.characterDao().deleteAll()
+
+                // Загружаем первую страницу
+                val charactersFromApi = ktorApi.getCharacters(currentPage)
+
+                charactersFromApi?.let { characters ->
+                    if (characters.isNotEmpty()) {
+                        // Сохраняем в БД
+                        database.characterDao().insertAll(characters)
+
+                        // Обновляем адаптер
+                        characterAdapter.updateData(characters)
+
+                        hasMoreData = characters.size >= itemsPerPage
+
+                        Toast.makeText(requireContext(), "Данные обновлены", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(requireContext(), "Нет данных для обновления", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Ошибка обновления: ${e.message}", Toast.LENGTH_SHORT).show()
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
+    private fun loadMoreData() {
+        if (isLoading || !hasMoreData) return
+
+        isLoading = true
+        currentPage++
+
+        lifecycleScope.launch {
+            try {
+                // Загружаем следующую страницу
+                val nextCharacters = ktorApi.getCharacters(currentPage)
+
+                nextCharacters?.let { newCharacters ->
+                    if (newCharacters.isNotEmpty()) {
+                        // Сохраняем в БД
+                        database.characterDao().insertAll(newCharacters)
+
+                        // Объединяем со старыми данными
+                        val currentCharacters = characterAdapter.getCharacters() ?: emptyList()
+                        val updatedList = currentCharacters + newCharacters
+
+                        // Обновляем адаптер
+                        characterAdapter.updateData(updatedList)
+
+                        hasMoreData = newCharacters.size >= itemsPerPage
+
+                        Toast.makeText(requireContext(), "Загружено еще ${newCharacters.size} элементов", Toast.LENGTH_SHORT).show()
+                    } else {
+                        hasMoreData = false
+                        Toast.makeText(requireContext(), "Все данные загружены", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } catch (e: Exception) {
+                currentPage-- // Откатываем страницу при ошибке
+                Toast.makeText(requireContext(), "Ошибка загрузки: ${e.message}", Toast.LENGTH_SHORT).show()
+            } finally {
+                isLoading = false
+            }
         }
     }
 
@@ -87,8 +242,7 @@ class HomeFragment : LoggingFragment() {
 
     fun getCharactersData(): List<Character> {
         return try {
-            // Возвращаем данные из адаптера
-            characterAdapter?.getCharacters() ?: emptyList()
+            characterAdapter.getCharacters() ?: emptyList()
         } catch (e: Exception) {
             emptyList()
         }
