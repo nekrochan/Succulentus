@@ -3,14 +3,15 @@ package com.example.succulentus.database
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.succulentus.data.Character
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CharacterDao {
     @Query("SELECT * FROM Character")
     fun getAllLiveData(): LiveData<List<Character>>
 
-    @Query("SELECT * FROM Character")
-    fun getAll(): List<Character>
+    @Query("SELECT * FROM Character ORDER BY name ASC")
+    fun getAllFlow(): Flow<List<Character>>
 
     @Query("SELECT * FROM Character WHERE _id = :id")
     suspend fun getCharacterById(id: Int): Character?

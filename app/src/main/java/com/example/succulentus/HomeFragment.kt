@@ -14,6 +14,7 @@ import com.example.succulentus.databinding.FragmentHomeBinding
 import com.example.succulentus.network.KtorNetwork
 import com.example.succulentus.network.KtorNetworkApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
 
 class HomeFragment : LoggingFragment() {
 
@@ -52,7 +53,23 @@ class HomeFragment : LoggingFragment() {
             checkDatabaseData()
         }
 
+
+        observeCharactersFlow()
+
         return binding.root
+    }
+
+    private fun observeCharactersFlow() {
+        lifecycleScope.launch {
+            // Подписываемся на Flow из DAO
+            database.characterDao().getAllFlow().collect { characters ->
+                // Автоматически обновляем список при изменении данных в БД
+                characterAdapter.updateData(characters)
+
+                // Можно добавить логирование для отладки
+                // Log.d("Flow", "Получено ${characters.size} персонажей")
+            }
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -68,7 +85,7 @@ class HomeFragment : LoggingFragment() {
             findNavController().navigate(action)
         }
 
-        // Обработчик для кнопки обновления (теперь она уже в XML)
+        // Обработчик для кнопки обновления
         binding.refreshButton.setOnClickListener {
             refreshData()
         }
@@ -97,16 +114,10 @@ class HomeFragment : LoggingFragment() {
     private fun checkDatabaseData() {
         lifecycleScope.launch {
             try {
-                // Проверяем, есть ли данные в БД
-                val charactersFromDb = database.characterDao().getAll()
+                // Получаем первое значение из Flow
+                val charactersFromDb = database.characterDao().getAllFlow().first()
 
-                if (charactersFromDb.isNotEmpty()) {
-                    // Отображаем данные из БД
-                    characterAdapter.updateData(charactersFromDb)
-
-                    // Проверяем, есть ли еще данные для загрузки
-                    hasMoreData = charactersFromDb.size >= itemsPerPage
-                } else {
+                if (charactersFromDb.isEmpty()) {
                     // Делаем запрос к API
                     loadCharactersFromApi()
                 }
@@ -127,11 +138,8 @@ class HomeFragment : LoggingFragment() {
 
                 charactersFromApi?.let { characters ->
                     if (characters.isNotEmpty()) {
-                        // Сохраняем в БД
+                        // Сохраняем в БД - после этого Flow автоматически обновит список
                         database.characterDao().insertAll(characters)
-
-                        // Обновляем адаптер
-                        characterAdapter.updateData(characters)
 
                         // Сбрасываем пагинацию
                         currentPage = 1
@@ -167,11 +175,7 @@ class HomeFragment : LoggingFragment() {
 
                 charactersFromApi?.let { characters ->
                     if (characters.isNotEmpty()) {
-                        // Сохраняем в БД
                         database.characterDao().insertAll(characters)
-
-                        // Обновляем адаптер
-                        characterAdapter.updateData(characters)
 
                         hasMoreData = characters.size >= itemsPerPage
 
@@ -201,15 +205,7 @@ class HomeFragment : LoggingFragment() {
 
                 nextCharacters?.let { newCharacters ->
                     if (newCharacters.isNotEmpty()) {
-                        // Сохраняем в БД
                         database.characterDao().insertAll(newCharacters)
-
-                        // Объединяем со старыми данными
-                        val currentCharacters = characterAdapter.getCharacters() ?: emptyList()
-                        val updatedList = currentCharacters + newCharacters
-
-                        // Обновляем адаптер
-                        characterAdapter.updateData(updatedList)
 
                         hasMoreData = newCharacters.size >= itemsPerPage
 
