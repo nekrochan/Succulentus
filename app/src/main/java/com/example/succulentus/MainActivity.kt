@@ -1,16 +1,10 @@
 package com.example.succulentus
 
 import android.os.Bundle
-import androidx.navigation.NavController
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.NavigationUI
 import com.example.succulentus.databinding.ActivityMainBinding
-import com.example.succulentus.databinding.FragmentLoginBinding
 
 class MainActivity : LoggingActivity() {
 
-    //TODO: биндинги
     private var _binding: ActivityMainBinding? = null
     private val binding get() = _binding!!
 
@@ -35,7 +29,4 @@ class MainActivity : LoggingActivity() {
         return null
     }
 
-    suspend fun getCharacters(): List<Character> {
-        return (findHomeFragment()?.getCharactersData() ?: emptyList()) as List<Character>
-    }
 }

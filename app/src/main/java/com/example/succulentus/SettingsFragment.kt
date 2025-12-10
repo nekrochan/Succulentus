@@ -44,8 +44,10 @@ class SettingsFragment : Fragment() {
 
     // Для работы с файлами
     private val REQUEST_PERMISSION_CODE = 100
-    private var backupFile: File? = null
-    private var hasBackup: Boolean = false
+    private var externalBackupFile: File? = null  // Файл в загрузках
+    private var internalBackupFile: File? = null  // Файл во внутреннем хранилище
+    private var hasExternalBackup: Boolean = false
+    private var hasInternalBackup: Boolean = false
     private lateinit var dataStoreManager: DataStoreManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,7 +69,7 @@ class SettingsFragment : Fragment() {
 
         setupUI()
         loadSettings()
-        checkBackupFile()
+        checkBackupFiles()
 
         binding.seekBarFontSize.setOnSeekBarChangeListener(object :
             android.widget.SeekBar.OnSeekBarChangeListener {
@@ -80,11 +82,11 @@ class SettingsFragment : Fragment() {
         })
 
         binding.buttonDeleteBackup.setOnClickListener {
-            deleteBackup()
+            showDeleteBackupDialog()
         }
 
         binding.buttonRestoreBackup.setOnClickListener {
-            restoreBackup()
+            showRestoreBackupDialog()
         }
 
         binding.buttonSaveSettings.setOnClickListener {
@@ -120,7 +122,7 @@ class SettingsFragment : Fragment() {
                 fontSize = settings.fontSize
                 backupFileName = settings.backupFilename
 
-                // Обновляем UI
+                // Обновляем отображение
                 binding.switchNotifications.isChecked = notificationsEnabled
 
                 val position = when(language) {
@@ -134,7 +136,7 @@ class SettingsFragment : Fragment() {
                 updateFontSizePreview()
 
                 binding.editTextBackupFileName.setText(backupFileName)
-                checkBackupFile()
+                checkBackupFiles()
             }
         }
     }
@@ -150,7 +152,7 @@ class SettingsFragment : Fragment() {
         }
         val newBackupFileName = binding.editTextBackupFileName.text.toString().trim()
 
-        // Сохраняем username в SharedPreferences
+        // Сохраняем юзерку в SharedPreferences
         val sharedPref = requireContext().getSharedPreferences("app_settings",
             android.content.Context.MODE_PRIVATE)
         with(sharedPref.edit()) {
@@ -238,7 +240,6 @@ class SettingsFragment : Fragment() {
                 val characters = if (activity is CharacterDataProvider) {
                     (activity as CharacterDataProvider).getCharacters()
                 } else {
-                    // Альтернативный способ: создаем новый экземпляр KtorNetwork
                     try {
                         val ktorApi = KtorNetwork()
                         ktorApi.getCharacters()
@@ -247,28 +248,23 @@ class SettingsFragment : Fragment() {
                     }
                 }
 
-                if (characters != null) {
-                    if (characters.isEmpty()) {
-                        Toast.makeText(requireContext(),
-                            "Нет данных для резервного копирования", Toast.LENGTH_SHORT).show()
-                        return@launch
-                    }
+                if (characters != null && characters.isEmpty()) {
+                    Toast.makeText(requireContext(),
+                        "Нет данных для резервного копирования", Toast.LENGTH_SHORT).show()
+                    return@launch
                 }
 
                 // Форматируем данные в текстовый формат
                 val backupData = formatBackupData(characters)
 
-                // Сохраняем во внешнее хранилище
+                // Сохраняем ВО ВНЕШНЕЕ хранилище (загрузки)
                 val success = saveBackupToExternalStorage(backupData)
 
                 if (success) {
-                    // Сохраняем копию во внутреннее хранилище
-                    saveBackupToInternalStorage(backupData)
-
-                    hasBackup = true
+                    hasExternalBackup = true
                     updateFileInfo()
                     Toast.makeText(requireContext(),
-                        "Резервная копия создана (${characters?.size} записей)",
+                        "Резервная копия создана в загрузках (${characters?.size ?: 0} записей)",
                         Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
@@ -280,12 +276,93 @@ class SettingsFragment : Fragment() {
         }
     }
 
+    private fun deleteBackup() {
+        try {
+            // 1. Удаляем файл из загрузок
+            if (externalBackupFile != null && externalBackupFile!!.exists()) {
+                if (externalBackupFile!!.delete()) {
+                    // 2. Сохраняем копию во внутреннем хранилище
+                    val backupData = readBackupFile(externalBackupFile!!)
+                    if (backupData != null) {
+                        saveBackupToInternalStorage(backupData)
+                    }
+
+                    externalBackupFile = null
+                    hasExternalBackup = false
+
+                    // 3. Проверяем наличие внутренней копии
+                    checkInternalBackupFile()
+
+                    updateFileInfo()
+                    Toast.makeText(requireContext(),
+                        "Резервная копия удалена из загрузок и сохранена во внутреннем хранилище",
+                        Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(requireContext(), "Ошибка удаления файла", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(requireContext(), "Файл не найден в загрузках", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Ошибка удаления файла: ${e.message}",
+                Toast.LENGTH_SHORT).show()
+            Log.e("SettingsFragment", "Error deleting backup", e)
+        }
+    }
+
+    private fun restoreBackup() {
+        try {
+            // 1. Проверяем наличие внутренней резервной копии
+            if (internalBackupFile != null && internalBackupFile!!.exists()) {
+                // 2. Читаем данные из внутреннего хранилища
+                val backupData = readBackupFile(internalBackupFile!!)
+                if (backupData != null) {
+                    // 3. Сохраняем в загрузки
+                    val success = saveBackupToExternalStorage(backupData)
+
+                    if (success) {
+                        // 4. Удаляем из внутреннего хранилища
+                        if (internalBackupFile!!.delete()) {
+                            internalBackupFile = null
+                            hasInternalBackup = false
+                            hasExternalBackup = true
+
+                            updateFileInfo()
+                            Toast.makeText(requireContext(),
+                                "Резервная копия восстановлена в загрузки и удалена из внутреннего хранилища",
+                                Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } else {
+                    Toast.makeText(requireContext(), "Ошибка чтения резервной копии",
+                        Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(requireContext(), "Резервная копия не найдена во внутреннем хранилище",
+                    Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Ошибка восстановления файла: ${e.message}",
+                Toast.LENGTH_SHORT).show()
+            Log.e("SettingsFragment", "Error restoring backup", e)
+        }
+    }
+
+    private fun readBackupFile(file: File): String? {
+        return try {
+            FileInputStream(file).bufferedReader().use { it.readText() }
+        } catch (e: Exception) {
+            Log.e("SettingsFragment", "Error reading backup file", e)
+            null
+        }
+    }
+
     private fun formatBackupData(characters: List<Character>?): String {
         return buildString {
             appendLine("=== РЕЗЕРВНАЯ КОПИЯ ДАННЫХ ===")
             appendLine("Дата создания: ${SimpleDateFormat("dd.MM.yyyy HH:mm:ss",
                 Locale.getDefault()).format(Date())}")
-            appendLine("Всего записей: ${characters?.size}")
+            appendLine("Всего записей: ${characters?.size ?: 0}")
             appendLine("=".repeat(50))
             appendLine()
 
@@ -357,12 +434,7 @@ class SettingsFragment : Fragment() {
 
     private fun saveBackupToExternalStorage(data: String): Boolean {
         return try {
-            val downloadsDir = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // Для Android 10+ используем приложения
-                requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-            } else {
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            }
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
 
             // Создаем папку с именем приложения
             val appDir = File(downloadsDir, "SucculentusBackups")
@@ -370,9 +442,9 @@ class SettingsFragment : Fragment() {
                 appDir.mkdirs()
             }
 
-            backupFile = File(appDir, backupFileName)
+            externalBackupFile = File(appDir, backupFileName)
 
-            FileOutputStream(backupFile).use { output ->
+            FileOutputStream(externalBackupFile).use { output ->
                 output.write(data.toByteArray(Charsets.UTF_8))
             }
 
@@ -391,198 +463,141 @@ class SettingsFragment : Fragment() {
                 backupDir.mkdirs()
             }
 
-            // Сохраняем с временной меткой
-            val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            val internalFile = File(backupDir, "backup_$timestamp.txt")
+            // Сохраняем с текущим именем файла
+            internalBackupFile = File(backupDir, backupFileName)
 
-            FileOutputStream(internalFile).use { output ->
+            FileOutputStream(internalBackupFile).use { output ->
                 output.write(data.toByteArray(Charsets.UTF_8))
             }
 
-            Log.d("SettingsFragment", "Internal backup saved: ${internalFile.absolutePath}")
+            Log.d("SettingsFragment", "Internal backup saved: ${internalBackupFile?.absolutePath}")
         } catch (e: Exception) {
             Log.e("SettingsFragment", "Error saving internal backup", e)
         }
     }
 
-    private fun deleteBackup() {
-        backupFile?.let { file ->
-            if (file.exists()) {
-                // Сначала создаем скрытую копию во внутреннем хранилище
-                try {
-                    FileInputStream(file).use { input ->
-                        val internalBackup = File(requireContext().filesDir,
-                            ".hidden_backup_${System.currentTimeMillis()}.txt")
-                        FileOutputStream(internalBackup).use { output ->
-                            input.copyTo(output)
-                        }
-                    }
-
-                    // Удаляем основной файл
-                    if (file.delete()) {
-                        backupFile = null
-                        hasBackup = false
-                        updateFileInfo()
-                        Toast.makeText(requireContext(), "Файл удален (резервная копия сохранена)",
-                            Toast.LENGTH_SHORT).show()
-                    }
-                } catch (e: Exception) {
-                    Toast.makeText(requireContext(), "Ошибка удаления файла",
-                        Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
+    private fun checkBackupFiles() {
+        checkExternalBackupFile()
+        checkInternalBackupFile()
     }
 
-    private fun restoreBackup() {
-        // Ищем скрытые резервные копии
-        val internalDir = requireContext().filesDir
-        val backupFiles = internalDir.listFiles { file ->
-            file.name.startsWith(".hidden_backup_")
-        }
-
-        backupFiles?.maxByOrNull { it.lastModified() }?.let { latestBackup ->
-            try {
-                val downloadsDir = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-                } else {
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                }
-
-                val appDir = File(downloadsDir, "SucculentusBackups")
-                if (!appDir.exists()) {
-                    appDir.mkdirs()
-                }
-
-                val restoredFile = File(appDir, backupFileName)
-
-                FileInputStream(latestBackup).use { input ->
-                    FileOutputStream(restoredFile).use { output ->
-                        input.copyTo(output)
-                    }
-                }
-
-                backupFile = restoredFile
-                hasBackup = true
-                updateFileInfo()
-                Toast.makeText(requireContext(), "Резервная копия восстановлена",
-                    Toast.LENGTH_SHORT).show()
-            } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Ошибка восстановления",
-                    Toast.LENGTH_SHORT).show()
-            }
-        } ?: run {
-            Toast.makeText(requireContext(), "Резервная копия не найдена",
-                Toast.LENGTH_SHORT).show()
-        }
-    }
-
-    private fun checkBackupFile() {
+    private fun checkExternalBackupFile() {
         try {
-            val downloadsDir = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                requireContext().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-            } else {
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            }
-
+            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             val appDir = File(downloadsDir, "SucculentusBackups")
-            backupFile = File(appDir, backupFileName)
-
-            hasBackup = backupFile?.exists() ?: false
-            updateFileInfo()
+            externalBackupFile = File(appDir, backupFileName)
+            hasExternalBackup = externalBackupFile?.exists() ?: false
         } catch (e: Exception) {
-            Log.e("SettingsFragment", "Error checking backup file", e)
-            hasBackup = false
-            updateFileInfo()
+            Log.e("SettingsFragment", "Error checking external backup file", e)
+            hasExternalBackup = false
+        }
+    }
+
+    private fun checkInternalBackupFile() {
+        try {
+            val backupDir = File(requireContext().filesDir, "backups")
+            if (backupDir.exists()) {
+                internalBackupFile = File(backupDir, backupFileName)
+                hasInternalBackup = internalBackupFile?.exists() ?: false
+            } else {
+                hasInternalBackup = false
+            }
+        } catch (e: Exception) {
+            Log.e("SettingsFragment", "Error checking internal backup file", e)
+            hasInternalBackup = false
         }
     }
 
     private fun updateFileInfo() {
-        if (hasBackup && backupFile != null && backupFile!!.exists()) {
-            val file = backupFile!!
+        val info = StringBuilder()
+
+        // Информация о внешней резервной копии (загрузки)
+        if (hasExternalBackup && externalBackupFile != null && externalBackupFile!!.exists()) {
+            val file = externalBackupFile!!
             try {
                 val sizeKB = file.length() / 1024
                 val lastModified = SimpleDateFormat("dd.MM.yyyy HH:mm",
                     Locale.getDefault()).format(Date(file.lastModified()))
 
-                // Читаем первую строку для информации о содержимом
-                val firstLine = FileInputStream(file).bufferedReader().use { it.readLine() }
-                val recordCount = FileInputStream(file).bufferedReader().use { reader ->
-                    reader.lineSequence()
-                        .firstOrNull { it.contains("Всего записей:") }
-                        ?.substringAfter(": ")?.trim() ?: "N/A"
-                }
-
-                val info = """
-                Файл: ${file.name}
-                Размер: ${sizeKB} KB
-                Записей: $recordCount
-                Создан: $lastModified
-                Путь: ${file.parent}
-                Тип: $firstLine
-            """.trimIndent()
-
-                binding.textViewFileInfo.text = info
-                binding.buttonDeleteBackup.isEnabled = true
-                binding.buttonCreateBackup.text = "Обновить резервную копию"
+                info.appendLine("=== РЕЗЕРВНАЯ КОПИЯ В ЗАГРУЗКАХ ===")
+                info.appendLine("Файл: ${file.name}")
+                info.appendLine("Размер: ${sizeKB} KB")
+                info.appendLine("Создан: $lastModified")
+                info.appendLine("Путь: ${file.parent}")
+                info.appendLine()
             } catch (e: Exception) {
-                binding.textViewFileInfo.text = "Ошибка чтения файла"
-                binding.buttonDeleteBackup.isEnabled = true
+                info.appendLine("Ошибка чтения информации о файле")
             }
         } else {
-            binding.textViewFileInfo.text = """
-            Файл резервной копии не найден.
-            
-            Для создания резервной копии:
-            1. Убедитесь, что загружены данные
-            2. Нажмите "Создать резервную копию"
-            3. При необходимости предоставьте разрешения
-            
-            Файл будет сохранен в:
-            /Downloads/SucculentusBackups/
-        """.trimIndent()
-            binding.buttonDeleteBackup.isEnabled = false
-            binding.buttonCreateBackup.text = "Создать резервную копию"
+            info.appendLine("Резервная копия в загрузках: НЕ НАЙДЕНА")
+            info.appendLine()
         }
 
-        // Проверяем наличие внутренних резервных копий
-        checkInternalBackups()
-    }
+        // Информация о внутренней резервной копии
+        if (hasInternalBackup && internalBackupFile != null && internalBackupFile!!.exists()) {
+            val file = internalBackupFile!!
+            try {
+                val sizeKB = file.length() / 1024
+                val lastModified = SimpleDateFormat("dd.MM.yyyy HH:mm",
+                    Locale.getDefault()).format(Date(file.lastModified()))
 
-    private fun checkInternalBackups() {
-        val backupDir = File(requireContext().filesDir, "backups")
-        if (backupDir.exists()) {
-            val backupFiles = backupDir.listFiles { file ->
-                file.name.startsWith("backup_") && file.name.endsWith(".txt")
-            }
-
-            val hasInternalBackup = backupFiles?.isNotEmpty() ?: false
-            binding.buttonRestoreBackup.isEnabled = hasInternalBackup
-
-            if (hasInternalBackup) {
-                val latestBackup = backupFiles!!.maxByOrNull { it.lastModified() }
-                val backupCount = backupFiles.size
-                val latestDate = SimpleDateFormat("dd.MM.yyyy HH:mm",
-                    Locale.getDefault()).format(Date(latestBackup!!.lastModified()))
-
-                binding.textViewFileInfo.append("\n\nДоступно внутренних резервных копий: $backupCount")
-                binding.textViewFileInfo.append("\nПоследняя: $latestDate")
+                info.appendLine("=== ВНУТРЕННЯЯ РЕЗЕРВНАЯ КОПИЯ ===")
+                info.appendLine("Файл: ${file.name}")
+                info.appendLine("Размер: ${sizeKB} KB")
+                info.appendLine("Создан: $lastModified")
+                info.appendLine("Путь: Внутреннее хранилище")
+            } catch (e: Exception) {
+                info.appendLine("Ошибка чтения информации о внутреннем файле")
             }
         } else {
-            binding.buttonRestoreBackup.isEnabled = false
+            info.appendLine("Внутренняя резервная копия: НЕ НАЙДЕНА")
+        }
+
+        binding.textViewFileInfo.text = info.toString()
+
+        // Обновляем состояние кнопок
+        binding.buttonDeleteBackup.isEnabled = hasExternalBackup
+        binding.buttonRestoreBackup.isEnabled = hasInternalBackup
+
+        if (hasExternalBackup) {
+            binding.buttonCreateBackup.text = "Обновить резервную копию"
+        } else {
+            binding.buttonCreateBackup.text = "Создать резервную копию"
         }
     }
 
     private fun showCreateBackupDialog() {
         AlertDialog.Builder(requireContext())
             .setTitle("Создание резервной копии")
-            .setMessage("Вы уверены, что хотите создать резервную копию данных?")
+            .setMessage("Создать резервную копию данных в папке Загрузки?")
             .setPositiveButton("Создать") { _, _ ->
                 if (checkPermissions()) {
                     createBackup()
                 } else {
                     requestPermissions()
                 }
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun showDeleteBackupDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Удаление резервной копии")
+            .setMessage("Удалить резервную копию из Загрузок и сохранить её во внутреннем хранилище?")
+            .setPositiveButton("Удалить") { _, _ ->
+                deleteBackup()
+            }
+            .setNegativeButton("Отмена", null)
+            .show()
+    }
+
+    private fun showRestoreBackupDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Восстановление резервной копии")
+            .setMessage("Восстановить резервную копию из внутреннего хранилища в Загрузки?")
+            .setPositiveButton("Восстановить") { _, _ ->
+                restoreBackup()
             }
             .setNegativeButton("Отмена", null)
             .show()
